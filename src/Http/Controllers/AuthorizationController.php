@@ -29,18 +29,27 @@ class AuthorizationController
      * @var \Illuminate\Contracts\Routing\ResponseFactory
      */
     protected $response;
+    
+    /**
+     * The Token Repository
+     * @param  \Laravel\Passport\TokenRepository  $tokens
+     */
+    protected $tokens;
 
     /**
      * Create a new controller instance.
      *
      * @param  \League\OAuth2\Server\AuthorizationServer  $server
      * @param  \Illuminate\Contracts\Routing\ResponseFactory  $response
+     * @param  \Laravel\Passport\TokenRepository  $tokens
+     * 
      * @return void
      */
-    public function __construct(AuthorizationServer $server, ResponseFactory $response)
+    public function __construct(AuthorizationServer $server, ResponseFactory $response, TokenRepository $tokens)
     {
         $this->server = $server;
         $this->response = $response;
+        $this->tokens = $tokens;
     }
 
     /**
@@ -49,25 +58,22 @@ class AuthorizationController
      * @param  \Psr\Http\Message\ServerRequestInterface  $psrRequest
      * @param  \Illuminate\Http\Request  $request
      * @param  \Laravel\Passport\ClientRepository  $clients
-     * @param  \Laravel\Passport\TokenRepository  $tokens
      * @return \Illuminate\Http\Response
      */
-    public function authorize(ServerRequestInterface $psrRequest,
-                              Request $request,
-                              ClientRepository $clients,
-                              TokenRepository $tokens)
-    {
-        return $this->withErrorHandling(function () use ($psrRequest, $request, $clients, $tokens) {
+    public function authorize(
+        ServerRequestInterface $psrRequest,
+        Request $request,
+        ClientRepository $clients
+    ) {
+        return $this->withErrorHandling(function () use ($psrRequest, $request, $clients) {
             $authRequest = $this->server->validateAuthorizationRequest($psrRequest);
 
-            $scopes = $this->parseScopes($authRequest);
+            $user = $request->user();
+            $client = $clients->find($authRequest->getClient()->getIdentifier());
 
-            $token = $tokens->findValidToken(
-                $user = $request->user(),
-                $client = $clients->find($authRequest->getClient()->getIdentifier())
-            );
-
-            if ($token && $token->scopes === collect($scopes)->pluck('id')->all()) {
+            if (
+                $client->firstParty() || ($this->hasValidToken($user, $client, $scopes = $this->parseScopes($authRequest)))
+            ) {
                 return $this->approveRequest($authRequest, $user);
             }
 
@@ -113,5 +119,19 @@ class AuthorizationController
         return $this->convertResponse(
             $this->server->completeAuthorizationRequest($authRequest, new Psr7Response)
         );
+    }
+
+    /**
+     * Check if user has an previous valid token for the same client.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $user
+     * @param  \Laravel\Passport\Client  $client
+     * @param array $scopes
+     * @return boolean
+     */
+    protected function hasValidToken($user, $client, $scopes)
+    {
+        return $token = $this->tokens->findValidToken($user, $client) &&
+            $token->scopes === collect($scopes)->pluck('id')->all();
     }
 }

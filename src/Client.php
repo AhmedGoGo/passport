@@ -39,6 +39,7 @@ class Client extends Model
         'personal_access_client' => 'bool',
         'password_client' => 'bool',
         'revoked' => 'bool',
+        'first_party_client' => 'bool',
     ];
 
     /**
@@ -80,6 +81,6 @@ class Client extends Model
      */
     public function firstParty()
     {
-        return $this->personal_access_client || $this->password_client;
+        return $this->personal_access_client || $this->password_client || $this->first_party_client;
     }
 }
