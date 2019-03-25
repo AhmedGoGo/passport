@@ -72,7 +72,7 @@ class AuthorizationController
             $client = $clients->find($authRequest->getClient()->getIdentifier());
 
             if (
-                $client->firstParty() || ($this->hasValidToken($user, $client, $scopes = $this->parseScopes($authRequest)))
+                $client->first_party_client || ($this->hasValidToken($user, $client, $scopes = $this->parseScopes($authRequest)))
             ) {
                 return $this->approveRequest($authRequest, $user);
             }
@@ -131,7 +131,7 @@ class AuthorizationController
      */
     protected function hasValidToken($user, $client, $scopes)
     {
-        return $token = $this->tokens->findValidToken($user, $client) &&
-            $token->scopes === collect($scopes)->pluck('id')->all();
+        $token = $this->tokens->findValidToken($user, $client);
+        return $token && $token->scopes === collect($scopes)->pluck('id')->all();
     }
 }

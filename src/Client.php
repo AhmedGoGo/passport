@@ -81,6 +81,6 @@ class Client extends Model
      */
     public function firstParty()
     {
-        return $this->personal_access_client || $this->password_client || $this->first_party_client;
+        return $this->personal_access_client || $this->password_client;
     }
 }
