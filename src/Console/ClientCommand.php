@@ -19,7 +19,8 @@ class ClientCommand extends Command
             {--client : Create a client credentials grant client}
             {--name= : The name of the client}
             {--redirect_uri= : The URI to redirect to after authorization }
-            {--user_id= : The user ID the client should be assigned to }';
+            {--user_id= : The user ID the client should be assigned to }
+            {--first_party : The client will be marked as First Party (No Authentication Screen) }';
 
     /**
      * The console command description.
@@ -57,11 +58,13 @@ class ClientCommand extends Command
     {
         $name = $this->option('name') ?: $this->ask(
             'What should we name the personal access client?',
-            config('app.name').' Personal Access Client'
+            config('app.name') . ' Personal Access Client'
         );
 
         $client = $clients->createPersonalAccessClient(
-            null, $name, 'http://localhost'
+            null,
+            $name,
+            'http://localhost'
         );
 
         $this->info('Personal access client created successfully.');
@@ -79,11 +82,13 @@ class ClientCommand extends Command
     {
         $name = $this->option('name') ?: $this->ask(
             'What should we name the password grant client?',
-            config('app.name').' Password Grant Client'
+            config('app.name') . ' Password Grant Client'
         );
 
         $client = $clients->createPasswordGrantClient(
-            null, $name, 'http://localhost'
+            null,
+            $name,
+            'http://localhost'
         );
 
         $this->info('Password grant client created successfully.');
@@ -101,11 +106,13 @@ class ClientCommand extends Command
     {
         $name = $this->option('name') ?: $this->ask(
             'What should we name the client?',
-            config('app.name').' ClientCredentials Grant Client'
+            config('app.name') . ' ClientCredentials Grant Client'
         );
 
         $client = $clients->create(
-            null, $name, ''
+            null,
+            $name,
+            ''
         );
 
         $this->info('New client created successfully.');
@@ -134,8 +141,17 @@ class ClientCommand extends Command
             url('/auth/callback')
         );
 
+        $first_party = $this->option('first_party') ?: $this->confirm(
+            'Is this client a First Party?'
+        );
+
         $client = $clients->create(
-            $userId, $name, $redirect
+            $userId,
+            $name,
+            $redirect,
+            false,
+            false,
+            $first_party
         );
 
         $this->info('New client created successfully.');
@@ -151,7 +167,7 @@ class ClientCommand extends Command
      */
     protected function outputClientDetails(Client $client)
     {
-        $this->line('<comment>Client ID:</comment> '.$client->id);
-        $this->line('<comment>Client secret:</comment> '.$client->secret);
+        $this->line('<comment>Client ID:</comment> ' . $client->id);
+        $this->line('<comment>Client secret:</comment> ' . $client->secret);
     }
 }
