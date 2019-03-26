@@ -7,6 +7,7 @@ I only added the add first party to client command.
 to use this version instead of original passport version
 
 modify the Composer JSON 
+<code>
     "require": {
         "laravel/passport": "v7.2.2-alpha.1",
      }
@@ -17,4 +18,6 @@ modify the Composer JSON
             "type": "git"
         }
     ]
+    
+    </code>
 
